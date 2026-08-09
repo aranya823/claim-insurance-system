@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบติดตามงานเคลมประกัน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Sarabun', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen p-6">
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8 mb-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-blue-600">🚗 ระบบติดตามงานเคลมประกัน</h1>
+            <div id="authNav">
+                <button onclick="showLoginModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">พนักงานเข้าสู่ระบบ</button>
+            </div>
+        </div>
+
+        <!-- 1. มุมมองลูกค้า (ค้นหาพัสดุ/เคลม) -->
+        <div id="customerView">
+            <div class="bg-blue-50 p-6 rounded-xl mb-8 border border-blue-100">
+                <h2 class="text-xl font-semibold text-blue-800 mb-2">🔍 ตรวจสอบสถานะงานเคลม (สำหรับลูกค้า)</h2>
+                <p class="text-gray-600 mb-4 text-sm">กรอกเลขที่เรียกร้อง หรือ ทะเบียนรถ เพื่อตรวจสอบสถานะ</p>
+                <div class="flex gap-2">
+                    <input type="text" id="searchKeyword" placeholder="เช่น CLM-001 หรือ กข 1234" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="searchClaim()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">ค้นหา</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. มุมมองพนักงาน (จัดการข้อมูล - ซ่อนไว้จนกว่าจะ Login) -->
+        <div id="staffView" class="hidden">
+            <div class="bg-yellow-50 p-6 rounded-xl mb-8 border border-yellow-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-yellow-800">🛠️ แผงควบคุมพนักงาน (เพิ่ม/แก้ไขข้อมูล)</h2>
+                    <button onclick="logoutStaff()" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">ออกจากระบบพนักงาน</button>
+                </div>
+                <input type="hidden" id="editId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" id="licensePlate" placeholder="ทะเบียนรถ" class="w-full px-4 py-2 border rounded-lg bg-white">
+                    <input type="text" id="claimNo" placeholder="เลขที่เรียกร้อง" class="w-full px-4 py-2 border rounded-lg bg-white">
+                    <input type="text" id="customerName" placeholder="ชื่อลูกค้า" class="w-full px-4 py-2 border rounded-lg bg-white">
+                    <select id="status" class="w-full px-4 py-2 border rounded-lg bg-white">
+                        <option value="ยื่นเอกสารเคลม">1. ยื่นเอกสารเคลม</option>
+                        <option value="ยื่นเคลมในระบบ">2. ยื่นเคลมในระบบ</option>
+                        <option value="ประกันอนุมัติ">3. ประกันอนุมัติ</option>
+                        <option value="สั่งอะไหล่">4. สั่งอะไหล่</option>
+                        <option value="นัดซ่อม">5. นัดซ่อม</option>
+                        <option value="ส่งซ่อม">6. ส่งซ่อม</option>
+                        <option value="กำลังซ่อม">7. กำลังซ่อม</option>
+                        <option value="ส่งมอบรถ">8. ส่งมอบรถ</option>
+                    </select>
+                </div>
+                <button onclick="saveClaim()" class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition">บันทึกข้อมูลเข้าสู่ระบบ</button>
+            </div>
+        </div>
+
+        <!-- ตารางแสดงผล -->
+        <h2 id="tableTitle" class="text-xl font-semibold text-gray-800 mb-4">ผลการค้นหา</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-100 border-b">
+                        <th class="p-3">ทะเบียนรถ</th>
+                        <th class="p-3">เลขที่เรียกร้อง</th>
+                        <th class="p-3">ชื่อลูกค้า</th>
+                        <th class="p-3">สถานะปัจจุบัน</th>
+                        <th id="thAction" class="p-3 hidden">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="claimTableBody">
+                    <tr><td colspan="5" class="p-4 text-center text-gray-400">กรุณากรอกเลขทะเบียน หรือเลขที่เรียกร้อง เพื่อค้นหาข้อมูล</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal หน้าต่างใส่รหัสผ่านพนักงาน -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-96">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">🔐 เข้าสู่ระบบพนักงาน</h3>
+            <label class="block text-gray-700 text-sm mb-1">รหัสผ่านพนักงาน:</label>
+            <input type="password" id="staffPassword" placeholder="กรอกรหัสผ่าน" class="w-full px-4 py-2 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="flex justify-end gap-2">
+                <button onclick="closeLoginModal()" class="bg-gray-300 px-4 py-2 rounded-lg text-gray-700">ยกเลิก</button>
+                <button onclick="checkStaffLogin()" class="bg-blue-600 px-4 py-2 rounded-lg text-white">เข้าสู่ระบบ</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBLzai06cdnsDdOT5ZjLEgoeeCONREysC4",
+          authDomain: "claim-tracking-system.firebaseapp.com",
+          projectId: "claim-tracking-system",
+          storageBucket: "claim-tracking-system.appspot.com",
+          messagingSenderId: "413684283537",
+          appId: "1:413684283537:web:c8b3c52b0d6d4b06c6e730",
+          measurementId: "G-FJ86ZPLWE0"
+        };
+
+        const db = getFirestore(initializeApp(firebaseConfig));
+        let isStaff = false;
+
+        window.showLoginModal = () => { document.getElementById("loginModal").classList.remove("hidden"); };
+        window.closeLoginModal = () => { document.getElementById("loginModal").classList.add("hidden"); };
+
+        window.checkStaffLogin = () => {
+            const pass = document.getElementById("staffPassword").value;
+            if(pass === "1234") {
+                isStaff = true;
+                alert("เข้าสู่ระบบพนักงานสำเร็จ!");
+                closeLoginModal();
+                document.getElementById("staffPassword").value = "";
+                document.getElementById("staffView").classList.remove("hidden");
+                document.getElementById("thAction").classList.remove("hidden");
+                loadAllClaimsForStaff(); // พนักงานเห็นทั้งหมดเพื่อจัดการ
+            } else {
+                alert("รหัสผ่านไม่ถูกต้อง!");
+            }
+        };
+
+        window.logoutStaff = () => {
+            isStaff = false;
+            document.getElementById("staffView").classList.add("hidden");
+            document.getElementById("thAction").classList.add("hidden");
+            alert("ออกจากระบบพนักงานแล้ว");
+            document.getElementById("claimTableBody").innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">กรุณากรอกเลขทะเบียน หรือเลขที่เรียกร้อง เพื่อค้นหาข้อมูล</td></tr>`;
+        };
+
+        window.saveClaim = async () => {
+            const id = document.getElementById("editId").value;
+            const data = {
+                licensePlate: document.getElementById("licensePlate").value,
+                claimNo: document.getElementById("claimNo").value,
+                customerName: document.getElementById("customerName").value,
+                status: document.getElementById("status").value
+            };
+            if(!data.licensePlate || !data.claimNo || !data.customerName) {
+                alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+                return;
+            }
+            if(id) {
+                await updateDoc(doc(db, "claims", id), data);
+                document.getElementById("editId").value = "";
+            } else {
+                await addDoc(collection(db, "claims"), data);
+            }
+            alert("บันทึกสำเร็จ!");
+            document.getElementById("licensePlate").value = "";
+            document.getElementById("claimNo").value = "";
+            document.getElementById("customerName").value = "";
+            loadAllClaimsForStaff();
+        };
+
+        window.deleteClaim = async (id) => {
+            if(confirm("ยืนยันการลบข้อมูลนี้?")) {
+                await deleteDoc(doc(db, "claims", id));
+                loadAllClaimsForStaff();
+            }
+        };
+
+        window.editClaim = (id, lp, cn, name, st) => {
+            document.getElementById("editId").value = id;
+            document.getElementById("licensePlate").value = lp;
+            document.getElementById("claimNo").value = cn;
+            document.getElementById("customerName").value = name;
+            document.getElementById("status").value = st;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.searchClaim = async () => {
+            const keyword = document.getElementById("searchKeyword").value.trim().toLowerCase();
+            const tbody = document.getElementById("claimTableBody");
+            
+            if(!keyword) {
+                alert("กรุณากรอกเลขทะเบียนรถ หรือเลขที่เรียกร้องก่อนค้นหา");
+                return;
+            }
+
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">กำลังค้นหาข้อมูล...</td></tr>`;
+            
+            try {
+                const snapshot = await getDocs(collection(db, "claims"));
+                let found = false;
+                tbody.innerHTML = "";
+                
+                snapshot.forEach((docSnap) => {
+                    const d = docSnap.data();
+                    // เช็คว่าตรงกับเลขที่เรียกร้อง หรือ ทะเบียนรถไหม (แปลงเป็นตัวพิมพ์เล็กเพื่อเทียบกันได้แม่นยำ)
+                    if(d.claimNo.toLowerCase().includes(keyword) || d.licensePlate.toLowerCase().includes(keyword)) {
+                        tbody.innerHTML += renderRow(docSnap.id, d);
+                        found = true;
+                    }
+                });
+
+                if(!found) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">ไม่พบข้อมูลการเคลมที่ค้นหา กรุณาตรวจสอบใหม่อีกครั้ง</td></tr>`;
+                }
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">เกิดข้อผิดพลาดในการดึงข้อมูล</td></tr>`;
+            }
+        };
+
+        async function loadAllClaimsForStaff() {
+            const tbody = document.getElementById("claimTableBody");
+            tbody.innerHTML = "";
+            const snapshot = await getDocs(collection(db, "claims"));
+            snapshot.forEach((docSnap) => {
+                const d = docSnap.data();
+                tbody.innerHTML += renderRow(docSnap.id, d);
+            });
+        }
+
+        function renderRow(id, d) {
+            let badgeColor = "bg-blue-100 text-blue-800";
+            if(d.status === "ส่งมอบรถ" || d.status === "เสร็จสิ้น") badgeColor = "bg-green-100 text-green-800";
+            if(d.status === "กำลังซ่อม" || d.status === "ส่งซ่อม") badgeColor = "bg-indigo-100 text-indigo-800";
+            if(d.status === "ประกันอนุมัติ") badgeColor = "bg-yellow-100 text-yellow-800";
+
+            let actionTd = "";
+            if(isStaff) {
+                actionTd = `<td class="p-3">
+                    <button onclick="editClaim('${id}','${d.licensePlate}','${d.claimNo}','${d.customerName}','${d.status}')" class="text-blue-500 font-medium mr-3 hover:underline">แก้ไข</button>
+                    <button onclick="deleteClaim('${id}')" class="text-red-500 font-medium hover:underline">ลบ</button>
+                </td>`;
+            }
+
+            return `<tr class="border-b hover:bg-gray-50">
+                <td class="p-3 font-medium">${d.licensePlate}</td>
+                <td class="p-3 text-blue-600 font-semibold">${d.claimNo}</td>
+                <td class="p-3">${d.customerName}</td>
+                <td class="p-3"><span class="px-3 py-1 rounded-full text-sm ${badgeColor}">${d.status}</span></td>
+                ${isStaff ? actionTd : ''}
+            </tr>`;
+        }
+    </script>
+</body>
+</html>
