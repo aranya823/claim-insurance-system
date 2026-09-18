@@ -37,17 +37,14 @@
                     <button type="button" onclick="searchClaim()" class="bg-blue-600 hover:bg-blue-700 text-white px-7 py-3 rounded-xl text-sm font-medium transition cursor-pointer shadow-sm">ค้นหา</button>
                 </div>
                 
-                <!-- ผลการค้นหาแบบไทม์ไลน์กล่องย่อย (แสดงเฉพาะตอนค้นหาเจอ) -->
+                <!-- ผลการค้นหา (แสดงเฉพาะข้อมูลสรุปและป้ายสถานะ) -->
                 <div id="searchResult" class="mt-4 hidden">
-                    <div class="border border-slate-200 rounded-xl p-5 bg-white shadow-sm">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h3 id="resTitle" class="font-semibold text-slate-900 text-base"></h3>
-                                <p id="resSub" class="text-xs text-slate-500 mt-1"></p>
-                            </div>
-                            <span id="resBadge" class="bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1.5 rounded-full"></span>
+                    <div class="border border-slate-200 rounded-xl p-5 bg-white shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h3 id="resTitle" class="font-semibold text-slate-900 text-base"></h3>
+                            <p id="resSub" class="text-xs text-slate-500 mt-1 leading-relaxed"></p>
                         </div>
-                        <div id="resProgress" class="space-y-3 relative before:absolute before:inset-0 before:left-3 before:w-0.5 before:bg-slate-200"></div>
+                        <span id="resBadge" class="bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap"></span>
                     </div>
                 </div>
             </div>
@@ -115,7 +112,7 @@
                 </div>
             </div>
 
-            <!-- ตารางสำหรับมุมมองพนักงาน (แสดงเฉพาะตอนพนักงานเข้าสู่ระบบเท่านั้น) -->
+            <!-- ตารางสำหรับมุมมองพนักงาน -->
             <div id="employeeTableContainer" class="mt-6 hidden">
                 <h3 class="font-medium text-slate-800 mb-3 text-sm">📋 รายการข้อมูลทั้งหมดในระบบ (สำหรับพนักงานจัดการ)</h3>
                 <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white">
@@ -134,9 +131,7 @@
                                 <th class="py-3 px-3 text-center">จัดการ</th>
                             </tr>
                         </thead>
-                        <tbody id="claimTableBody">
-                            <!-- ข้อมูลพนักงาน -->
-                        </tbody>
+                        <tbody id="claimTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -168,7 +163,7 @@
         ];
 
         let isEmployee = false;
-        const EMPLOYEE_PASSWORD = "1234"; // รหัสผ่านพนักงาน
+        const EMPLOYEE_PASSWORD = "1234";
 
         function renderEmployeeTable() {
             const tbody = document.getElementById('claimTableBody');
@@ -337,38 +332,11 @@
                 document.getElementById('resTitle').innerText = `ทะเบียนรถ: ${found.plate} (${found.model})`;
                 document.getElementById('resSub').innerText = `ชื่อลูกค้า: ${found.name} | เลขเรียก: ${found.id} | ใบเคลม: ${found.no} | กำหนดเสร็จ: ${found.dueDate} | รายละเอียด: ${found.detail}`;
                 document.getElementById('resBadge').innerText = statusList[parseInt(found.status)-1];
-                
-                let progressHTML = '';
-                statusList.forEach((st, idx) => {
-                    const stepNum = idx + 1;
-                    const isDone = stepNum < parseInt(found.status);
-                    const isCurrent = stepNum === parseInt(found.status);
-                    
-                    let bgClass = "bg-slate-300 text-white";
-                    let textClass = "text-slate-400";
-                    if(isDone) {
-                        bgClass = "bg-emerald-500 text-white";
-                        textClass = "text-slate-900 font-medium";
-                    } else if(isCurrent) {
-                        bgClass = "bg-amber-500 text-white animate-pulse";
-                        textClass = "text-blue-600 font-semibold";
-                    }
-
-                    progressHTML += `
-                        <div class="flex items-start relative gap-3 text-xs">
-                            <div class="w-6 h-6 rounded-full ${bgClass} flex items-center justify-center font-bold z-10">${isDone ? '✓' : stepNum}</div>
-                            <div><p class="${textClass}">${st} ${isCurrent ? '(สถานะปัจจุบัน)' : ''}</p></div>
-                        </div>
-                    `;
-                });
-                document.getElementById('resProgress').innerHTML = progressHTML;
-
             } else {
                 resultBox.classList.remove('hidden');
                 document.getElementById('resTitle').innerText = "ไม่พบข้อมูลงานเคลม";
                 document.getElementById('resSub').innerText = "กรุณาตรวจสอบชื่อลูกค้า, ทะเบียนรถ หรือเลขที่เคลมอีกครั้ง";
                 document.getElementById('resBadge').innerText = "ไม่พบข้อมูล";
-                document.getElementById('resProgress').innerHTML = "";
             }
         }
     </script>
