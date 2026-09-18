@@ -4,6 +4,312 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบติดตามสถานะงานเคลมประกันรถยนต์</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="bg-blue-900 text-white py-4 shadow-md">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <h1 class="text-xl font-semibold flex items-center gap-2">🚗 ระบบติดตามงานเคลมประกัน</h1>
+            <div>
+                <button id="mainToggleBtn" onclick="handleHeaderBtn()" class="text-xs bg-blue-800 hover:bg-blue-700 px-4 py-2 rounded-full transition font-medium border border-blue-700">🔒 พนักงานเข้าสู่ระบบ</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content (หน้าเดียว สลับการแสดงผลตรงนี้) -->
+    <main class="container mx-auto px-4 py-8 max-w-4xl flex-grow">
+        
+        <!-- ส่วนที่ 1: หน้าจอสำหรับลูกค้า (ค่าเริ่มต้น) -->
+        <div id="customerView">
+            <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8 mb-8 border border-slate-200 text-center">
+                <h2 class="text-2xl font-semibold mb-2 text-blue-900">ตรวจสอบสถานะงานเคลมรถยนต์</h2>
+                <p class="text-sm text-slate-500 mb-6">กรอกเลขที่เรียกร้อง, เลขใบเคลม หรือทะเบียนรถ เพื่อดูสถานะแบบ Real-time ได้ทันที</p>
+                
+                <div class="max-w-xl mx-auto flex gap-2">
+                    <input type="text" id="searchInput" placeholder="เช่น 5กข147, CLM-001 หรือเลขใบเคลม" class="flex-grow border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600 shadow-sm">
+                    <button onclick="searchClaim()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-medium transition shadow-sm">ค้นหารถ</button>
+                </div>
+            </div>
+            
+            <!-- ผลการค้นหาของลูกค้า -->
+            <div id="searchResult" class="hidden">
+                <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-slate-200">
+                    <div class="border-b border-slate-100 pb-4 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                        <div>
+                            <h3 id="resTitle" class="font-semibold text-lg text-slate-900"></h3>
+                            <p id="resSub" class="text-xs text-slate-500 mt-1"></p>
+                        </div>
+                        <span id="resBadge" class="bg-amber-100 text-amber-700 text-xs font-semibold px-3.5 py-1.5 rounded-full"></span>
+                    </div>
+                    
+                    <!-- Progress Bar 8 ขั้นตอน -->
+                    <div id="resProgress" class="space-y-4 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-slate-200 my-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ส่วนที่ 2: หน้าจอสำหรับพนักงาน (ซ่อนไว้ จะแสดงเมื่อใส่รหัสผ่านถูก) -->
+        <div id="employeeView" class="hidden">
+            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex justify-between items-center">
+                <span class="text-blue-900 font-semibold text-sm">🛠️ โหมดผู้ดูแลระบบ (พนักงาน)</span>
+                <span class="text-xs text-slate-500">จัดการข้อมูลงานเคลมรถยนต์ทั้งหมด</span>
+            </div>
+
+            <!-- ฟอร์มเพิ่มข้อมูล -->
+            <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8 mb-8 border border-slate-200">
+                <h3 class="text-lg font-medium mb-4 text-blue-900">➕ เพิ่ม / อัปเดตข้อมูลงานเคลม</h3>
+                
+                <form id="claimForm" onsubmit="saveClaim(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <label class="block text-xs text-slate-600 mb-1">ชื่อลูกค้า</label>
+                        <input type="text" id="custName" required class="w-full border border-slate-300 rounded-lg px-3 py-2.5" placeholder="เช่น อรัญญา ตรรกชนชูชัย">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-600 mb-1">ทะเบียนรถ</label>
+                        <input type="text" id="carPlate" required class="w-full border border-slate-300 rounded-lg px-3 py-2.5" placeholder="เช่น 5กข147">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-600 mb-1">รุ่นรถ</label>
+                        <input type="text" id="carModel" required class="w-full border border-slate-300 rounded-lg px-3 py-2.5" placeholder="เช่น HAVAL">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-600 mb-1">เลขที่เรียกร้อง</label>
+                        <input type="text" id="claimId" required class="w-full border border-slate-300 rounded-lg px-3 py-2.5" placeholder="เช่น CLM-001">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-600 mb-1">เลขใบเคลม</label>
+                        <input type="text" id="claimNo" required class="w-full border border-slate-300 rounded-lg px-3 py-2.5" placeholder="เช่น 6905/123456">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-600 mb-1">เบอร์โทร</label>
+                        <input type="text" id="phone" required class="w-full border border-slate-300 rounded-lg px-3 py-2.5" placeholder="เช่น 0858858185">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs text-slate-600 mb-1">รายละเอียดการซ่อม</label>
+                        <input type="text" id="repairDetail" required class="w-full border border-slate-300 rounded-lg px-3 py-2.5" placeholder="เช่น ซ่อมกันชนหน้า-หลัง">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs text-slate-600 mb-1 font-semibold text-blue-900">สถานะปัจจุบัน (8 ขั้นตอน)</label>
+                        <select id="statusSelect" class="w-full border border-blue-300 rounded-lg px-3 py-2.5 bg-blue-50 text-blue-900 font-medium">
+                            <option value="1">1. ยื่นเอกสารเคลม</option>
+                            <option value="2">2. ยื่นเคลมในระบบ</option>
+                            <option value="3">3. ประกันอนุมัติ</option>
+                            <option value="4">4. ทำการสั่งอะไหล่เข้ามา</option>
+                            <option value="5">5. นัดซ่อม</option>
+                            <option value="6">6. ส่งซ่อม</option>
+                            <option value="7">7. กำลังซ่อม</option>
+                            <option value="8">8. ส่งมอบรถคืนลูกค้า</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2 mt-3">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition shadow-sm">บันทึกข้อมูลเข้าสู่ระบบ</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ตารางแสดงรายการทั้งหมด -->
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <h3 class="font-medium text-blue-900 mb-4 text-sm">📋 รายการงานเคลมทั้งหมดในระบบ</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-slate-500">
+                                <th class="pb-3">ชื่อลูกค้า</th>
+                                <th class="pb-3">ทะเบียนรถ</th>
+                                <th class="pb-3">เลขเรียก / ใบเคลม</th>
+                                <th class="pb-3">สถานะปัจจุบัน</th>
+                                <th class="pb-3 text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="claimTableBody">
+                            <!-- ข้อมูลจะถูกเติมเข้ามาอัตโนมัติ -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal ใส่รหัสผ่านพนักงาน -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
+            <h3 class="text-lg font-semibold text-blue-900 mb-2">เข้าสู่ระบบพนักงาน</h3>
+            <p class="text-xs text-slate-500 mb-4">กรุณากรอกรหัสผ่านเพื่อสลับเป็นโหมดจัดการระบบ</p>
+            <input type="password" id="empPassword" placeholder="รหัสผ่าน (admin123)" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm mb-4 focus:outline-none focus:border-blue-600">
+            <div class="flex gap-2">
+                <button onclick="closeLoginModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl text-sm font-medium transition">ยกเลิก</button>
+                <button onclick="verifyPassword()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-medium transition">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 mt-8">
+        <p>© 2026 Real-time Claim Tracking System.</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        const statusList = [
+            "1. ยื่นเอกสารเคลม",
+            "2. ยื่นเคลมในระบบ",
+            "3. ประกันอนุมัติ",
+            "4. ทำการสั่งอะไหล่เข้ามา",
+            "5. นัดซ่อม",
+            "6. ส่งซ่อม",
+            "7. กำลังซ่อม",
+            "8. ส่งมอบรถคืนลูกค้า"
+        ];
+
+        let claims = JSON.parse(localStorage.getItem('claims_data')) || [
+            { id: "CLM-001", no: "6905/123456", name: "อรัญญา ตรรกชนชูชัย", plate: "5กข147", model: "HAVAL", phone: "0858858185", detail: "ซ่อมกันชนหน้า-หลัง", status: "4" }
+        ];
+
+        let isEmployeeMode = false;
+
+        function handleHeaderBtn() {
+            if (!isEmployeeMode) {
+                // ถ้าอยู่หน้าลูกค้า ให้เปิด Modal ใส่รหัส
+                document.getElementById('loginModal').classList.remove('hidden');
+                document.getElementById('empPassword').value = '';
+                document.getElementById('empPassword').focus();
+            } else {
+                // ถ้าอยู่โหมดพนักงาน ให้กดกลับมาหน้าลูกค้า
+                isEmployeeMode = false;
+                document.getElementById('employeeView').classList.add('hidden');
+                document.getElementById('customerView').classList.remove('hidden');
+                document.getElementById('mainToggleBtn').innerText = "🔒 พนักงานเข้าสู่ระบบ";
+            }
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+        }
+
+        function verifyPassword() {
+            const pass = document.getElementById('empPassword').value;
+            if (pass === "admin123") {
+                closeLoginModal();
+                isEmployeeMode = true;
+                // สลับหน้าจอหลักเป็นโหมดพนักงาน
+                document.getElementById('customerView').classList.add('hidden');
+                document.getElementById('employeeView').classList.remove('hidden');
+                document.getElementById('mainToggleBtn').innerText = "🏠 กลับหน้าลูกค้า";
+                renderTable();
+            } else {
+                alert("รหัสผ่านไม่ถูกต้อง! (รหัสผ่านเริ่มต้นคือ admin123)");
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('claimTableBody');
+            tbody.innerHTML = '';
+            if (claims.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-400">ยังไม่มีข้อมูลในระบบ</td></tr>`;
+                return;
+            }
+            claims.forEach((c, index) => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="py-3 font-medium text-slate-900">${c.name}</td>
+                        <td class="py-3">${c.plate}</td>
+                        <td class="py-3">${c.id} / ${c.no}</td>
+                        <td class="py-3"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-[11px] font-medium">${statusList[parseInt(c.status)-1]}</span></td>
+                        <td class="py-3 text-center">
+                            <button onclick="deleteClaim(${index})" class="text-red-500 hover:text-red-700 px-2 py-1">ลบ</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            localStorage.setItem('claims_data', JSON.stringify(claims));
+        }
+
+        function saveClaim(e) {
+            e.preventDefault();
+            const newClaim = {
+                id: document.getElementById('claimId').value,
+                no: document.getElementById('claimNo').value,
+                name: document.getElementById('custName').value,
+                plate: document.getElementById('carPlate').value,
+                model: document.getElementById('carModel').value,
+                phone: document.getElementById('phone').value,
+                detail: document.getElementById('repairDetail').value,
+                status: document.getElementById('statusSelect').value
+            };
+            claims.push(newClaim);
+            renderTable();
+            document.getElementById('claimForm').reset();
+            alert("บันทึกข้อมูลเรียบร้อย!");
+        }
+
+        function deleteClaim(index) {
+            if(confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) {
+                claims.splice(index, 1);
+                renderTable();
+            }
+        }
+
+        function searchClaim() {
+            const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+            const resultBox = document.getElementById('searchResult');
+            if(!keyword) {
+                alert("กรุณากรอกเลขทะเบียน หรือเลขที่เคลมเพื่อค้นหา");
+                return;
+            }
+            const found = claims.find(c => c.id.toLowerCase() === keyword || c.no.toLowerCase() === keyword || c.plate.toLowerCase() === keyword);
+            
+            resultBox.classList.remove('hidden');
+            if(found) {
+                document.getElementById('resTitle').innerText = `ทะเบียนรถ: ${found.plate} (${found.model})`;
+                document.getElementById('resSub').innerText = `ชื่อลูกค้า: ${found.name} | เลขเรียก: ${found.id} | ใบเคลม: ${found.no} | รายละเอียด: ${found.detail}`;
+                document.getElementById('resBadge').innerText = statusList[parseInt(found.status)-1];
+                
+                let progressHTML = '';
+                statusList.forEach((st, idx) => {
+                    const stepNum = idx + 1;
+                    const isDone = stepNum < parseInt(found.status);
+                    const isCurrent = stepNum === parseInt(found.status);
+                    
+                    let bgClass = "bg-slate-300 text-white";
+                    let textClass = "text-slate-400";
+                    if(isDone) {
+                        bgClass = "bg-emerald-500 text-white";
+                        textClass = "text-slate-900 font-medium";
+                    } else if(isCurrent) {
+                        bgClass = "bg-amber-500 text-white animate-pulse";
+                        textClass = "text-blue-600 font-semibold";
+                    }
+
+                    progressHTML += `
+                        <div class="flex items-start relative gap-3 text-xs md:text-sm">
+                            <div class="w-7 h-7 rounded-full ${bgClass} flex items-center justify-center font-bold z-10 shrink-0">${isDone ? '✓' : stepNum}</div>
+                            <div class="pt-1"><p class="${textClass}">${st} ${isCurrent ? '<span class="ml-2 bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">สถานะปัจจุบัน</span>' : ''}</p></div>
+                        </div>
+                    `;
+                });
+                document.getElementById('resProgress').innerHTML = progressHTML;
+            } else {
+                document.getElementById('resTitle').innerText = "ไม่พบข้อมูลงานเคลม";
+                document.getElementById('resSub').innerText = "ไม่พบรถที่มีหมายเลขหรือทะเบียนดังกล่าวในระบบ กรุณาตรวจสอบอีกครั้ง";
+                document.getElementById('resBadge').innerText = "ไม่พบข้อมูล";
+                document.getElementById('resProgress').innerHTML = "";
+            }
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบติดตามสถานะงานเคลมประกันรถยนต์</title>
     <!-- ใช้ Tailwind CSS เพื่อความง่ายในการจัดดีไซน์ -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
