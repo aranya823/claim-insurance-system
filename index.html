@@ -17,7 +17,7 @@
         <div class="container mx-auto px-4 flex justify-between items-center">
             <h1 class="text-xl font-semibold">🚗 ระบบติดตามงานเคลมประกัน</h1>
             <div>
-                <button id="toggleRoleBtn" onclick="toggleRole()" class="text-xs bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded-full transition">พนักงานเข้าสู่ระบบ</button>
+                <button id="toggleRoleBtn" onclick="toggleRole()" class="text-xs bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded-full transition cursor-pointer">พนักงานเข้าสู่ระบบ</button>
             </div>
         </div>
     </header>
@@ -31,7 +31,7 @@
             <p class="text-xs text-slate-500 mb-4">กรอกเลขที่เรียกร้อง, ทะเบียนรถ หรือใบเคลม เพื่อตรวจสอบสถานะ</p>
             <div class="flex gap-2">
                 <input type="text" id="searchInput" placeholder="เช่น CLM-001, 5กข147 หรือเลขใบเคลม" class="flex-grow border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-600">
-                <button onclick="searchClaim()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition">ค้นหา</button>
+                <button type="button" onclick="searchClaim()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition cursor-pointer">ค้นหา</button>
             </div>
             
             <!-- ผลการค้นหาของลูกค้า -->
@@ -54,41 +54,41 @@
         <div id="employeeSection" class="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-slate-200 hidden">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-medium text-blue-900">🛠️ แผงควบคุมพนักงาน (เพิ่ม/แก้ไขข้อมูล)</h2>
-                <button onclick="toggleRole()" class="text-xs bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded-full">ซ่อนแผงพนักงาน</button>
+                <button type="button" onclick="toggleRole()" class="text-xs bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded-full cursor-pointer">ซ่อนแผงพนักงาน</button>
             </div>
             
-            <form id="claimForm" onsubmit="saveClaim(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                 <div>
                     <label class="block text-xs text-slate-600 mb-1">ชื่อลูกค้า</label>
-                    <input type="text" id="custName" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                    <input type="text" id="custName" class="w-full border border-slate-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
                     <label class="block text-xs text-slate-600 mb-1">ทะเบียนรถ</label>
-                    <input type="text" id="carPlate" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                    <input type="text" id="carPlate" class="w-full border border-slate-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
                     <label class="block text-xs text-slate-600 mb-1">เลขที่เรียกร้อง (Job ID)</label>
-                    <input type="text" id="claimId" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                    <input type="text" id="claimId" class="w-full border border-slate-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
                     <label class="block text-xs text-slate-600 mb-1">เลขใบเคลม</label>
-                    <input type="text" id="claimNo" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                    <input type="text" id="claimNo" class="w-full border border-slate-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
                     <label class="block text-xs text-slate-600 mb-1">รุ่นรถ</label>
-                    <input type="text" id="carModel" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                    <input type="text" id="carModel" class="w-full border border-slate-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
                     <label class="block text-xs text-slate-600 mb-1">เบอร์โทรศัพท์</label>
-                    <input type="text" id="phone" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                    <input type="text" id="phone" class="w-full border border-slate-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
                     <label class="block text-xs text-slate-600 mb-1">รายละเอียดการซ่อม</label>
-                    <input type="text" id="repairDetail" required class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                    <input type="text" id="repairDetail" class="w-full border border-slate-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
                     <label class="block text-xs text-slate-600 mb-1">กำหนดเสร็จ (เช่น 3 วัน)</label>
-                    <input type="text" id="dueDate" required class="w-full border border-slate-300 rounded-lg px-3 py-2" placeholder="เช่น 3 วัน หรือ 5 ส.ค.">
+                    <input type="text" id="dueDate" class="w-full border border-slate-300 rounded-lg px-3 py-2" placeholder="เช่น 3 วัน">
                 </div>
                 <div class="md:col-span-4">
                     <label class="block text-xs text-slate-600 mb-1">สถานะปัจจุบัน</label>
@@ -104,9 +104,9 @@
                     </select>
                 </div>
                 <div class="md:col-span-4 mt-2">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-medium transition cursor-pointer">บันทึกข้อมูลเข้าสู่ระบบ</button>
+                    <button type="button" onclick="saveClaimData()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition cursor-pointer shadow-md">💾 บันทึกข้อมูลเข้าสู่ระบบ</button>
                 </div>
-            </form>
+            </div>
         </div>
 
         <!-- ตารางแสดงรายการทั้งหมดในระบบ -->
@@ -175,7 +175,7 @@
                         <td class="py-3 px-2 text-blue-600 font-medium">${c.dueDate}</td>
                         <td class="py-3 px-2"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-[11px] font-medium">${statusList[parseInt(c.status)-1]}</span></td>
                         <td class="py-3 px-2 text-center">
-                            <button onclick="deleteClaim(${index})" class="text-red-500 hover:text-red-700 px-2 py-1 font-medium">ลบ</button>
+                            <button type="button" onclick="deleteClaim(${index})" class="text-red-500 hover:text-red-700 px-2 py-1 font-medium cursor-pointer">ลบ</button>
                         </td>
                     </tr>
                 `;
@@ -183,23 +183,42 @@
             localStorage.setItem('claims_data', JSON.stringify(claims));
         }
 
-        function saveClaim(e) {
-            e.preventDefault();
+        function saveClaimData() {
+            const id = document.getElementById('claimId').value.trim();
+            const plate = document.getElementById('carPlate').value.trim();
+            const name = document.getElementById('custName').value.trim();
+
+            if(!id || !plate || !name) {
+                alert("กรุณากรอกข้อมูลสำคัญให้ครบถ้วน (ชื่อลูกค้า, ทะเบียนรถ, เลขที่เรียกร้อง)");
+                return;
+            }
+
             const newClaim = {
-                id: document.getElementById('claimId').value,
-                no: document.getElementById('claimNo').value,
-                name: document.getElementById('custName').value,
-                plate: document.getElementById('carPlate').value,
-                model: document.getElementById('carModel').value,
-                phone: document.getElementById('phone').value,
-                detail: document.getElementById('repairDetail').value,
-                dueDate: document.getElementById('dueDate').value,
+                id: id,
+                no: document.getElementById('claimNo').value.trim(),
+                name: name,
+                plate: plate,
+                model: document.getElementById('carModel').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                detail: document.getElementById('repairDetail').value.trim(),
+                dueDate: document.getElementById('dueDate').value.trim(),
                 status: document.getElementById('statusSelect').value
             };
+
             claims.push(newClaim);
             renderTable();
-            document.getElementById('claimForm').reset();
-            alert("บันทึกข้อมูลสำเร็จ!");
+
+            // ล้างค่าในฟอร์ม
+            document.getElementById('claimId').value = '';
+            document.getElementById('claimNo').value = '';
+            document.getElementById('custName').value = '';
+            document.getElementById('carPlate').value = '';
+            document.getElementById('carModel').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('repairDetail').value = '';
+            document.getElementById('dueDate').value = '';
+
+            alert("บันทึกข้อมูลสำเร็จเรียบร้อย!");
         }
 
         function deleteClaim(index) {
