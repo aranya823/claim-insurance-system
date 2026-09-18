@@ -53,11 +53,12 @@
         <!-- แผงควบคุมพนักงาน (เพิ่ม/แก้ไขข้อมูล) -->
         <div id="employeeSection" class="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-slate-200 hidden">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-medium text-blue-900">🛠️ แผงควบคุมพนักงาน (เพิ่ม/แก้ไขข้อมูล)</h2>
+                <h2 id="formTitle" class="text-lg font-medium text-blue-900">🛠️ แผงควบคุมพนักงาน (เพิ่มข้อมูลใหม่)</h2>
                 <button type="button" onclick="toggleRole()" class="text-xs bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded-full cursor-pointer">ซ่อนแผงพนักงาน</button>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                <input type="hidden" id="editIndex" value="-1">
                 <div>
                     <label class="block text-xs text-slate-600 mb-1">ชื่อลูกค้า</label>
                     <input type="text" id="custName" class="w-full border border-slate-300 rounded-lg px-3 py-2">
@@ -103,8 +104,9 @@
                         <option value="8">8. ส่งมอบรถคืนลูกค้า</option>
                     </select>
                 </div>
-                <div class="md:col-span-4 mt-2">
-                    <button type="button" onclick="saveClaimData()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition cursor-pointer shadow-md">💾 บันทึกข้อมูลเข้าสู่ระบบ</button>
+                <div class="md:col-span-4 mt-2 flex gap-2">
+                    <button type="button" onclick="saveClaimData()" id="saveBtn" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition cursor-pointer shadow-md">💾 บันทึกข้อมูลเข้าสู่ระบบ</button>
+                    <button type="button" onclick="resetForm()" id="cancelBtn" class="hidden bg-slate-300 hover:bg-slate-400 text-slate-700 px-6 py-3 rounded-xl font-medium transition cursor-pointer">ยกเลิกแก้ไข</button>
                 </div>
             </div>
         </div>
@@ -153,7 +155,8 @@
         ];
 
         let claims = JSON.parse(localStorage.getItem('claims_data')) || [
-            { id: "CLM-001", no: "6905/123456", name: "อรัญญา ตรรกชนชูชัย", plate: "5กข147", model: "HAVAL", phone: "0858858185", detail: "ซ่อมกันชนหน้า-หลัง", dueDate: "3 วัน", status: "4" }
+            { id: "CLM-001", no: "6905/123456", name: "อรัญญา ตรรกชนชูชัย", plate: "5กข147", model: "HAVAL", phone: "0858858185", detail: "ซ่อมกันชนหน้า-หลัง", dueDate: "3 วัน", status: "4" },
+            { id: "CLM-002", no: "6905/456789", name: "วิญาดา ผิวผ่อง", plate: "6นฮ6767", model: "HAVAL", phone: "0858465124", detail: "ทำกัน", dueDate: "4-7 วัน", status: "2" }
         ];
 
         function renderTable() {
@@ -174,8 +177,9 @@
                         <td class="py-3 px-2">${c.detail}</td>
                         <td class="py-3 px-2 text-blue-600 font-medium">${c.dueDate}</td>
                         <td class="py-3 px-2"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-[11px] font-medium">${statusList[parseInt(c.status)-1]}</span></td>
-                        <td class="py-3 px-2 text-center">
-                            <button type="button" onclick="deleteClaim(${index})" class="text-red-500 hover:text-red-700 px-2 py-1 font-medium cursor-pointer">ลบ</button>
+                        <td class="py-3 px-2 text-center space-x-1">
+                            <button type="button" onclick="editClaim(${index})" class="text-amber-600 hover:text-amber-800 px-2 py-1 font-medium cursor-pointer bg-amber-50 rounded">แก้ไข</button>
+                            <button type="button" onclick="deleteClaim(${index})" class="text-red-500 hover:text-red-700 px-2 py-1 font-medium cursor-pointer bg-red-50 rounded">ลบ</button>
                         </td>
                     </tr>
                 `;
@@ -187,13 +191,14 @@
             const id = document.getElementById('claimId').value.trim();
             const plate = document.getElementById('carPlate').value.trim();
             const name = document.getElementById('custName').value.trim();
+            const editIndex = parseInt(document.getElementById('editIndex').value);
 
             if(!id || !plate || !name) {
                 alert("กรุณากรอกข้อมูลสำคัญให้ครบถ้วน (ชื่อลูกค้า, ทะเบียนรถ, เลขที่เรียกร้อง)");
                 return;
             }
 
-            const newClaim = {
+            const claimData = {
                 id: id,
                 no: document.getElementById('claimNo').value.trim(),
                 name: name,
@@ -205,10 +210,51 @@
                 status: document.getElementById('statusSelect').value
             };
 
-            claims.push(newClaim);
-            renderTable();
+            if (editIndex === -1) {
+                claims.push(claimData);
+                alert("บันทึกข้อมูลสำเร็จเรียบร้อย!");
+            } else {
+                claims[editIndex] = claimData;
+                alert("อัปเดตข้อมูลสำเร็จเรียบร้อย!");
+                resetForm();
+            }
 
-            // ล้างค่าในฟอร์ม
+            renderTable();
+            if (editIndex === -1) clearFormInputs();
+        }
+
+        function editClaim(index) {
+            const c = claims[index];
+            document.getElementById('editIndex').value = index;
+            document.getElementById('claimId').value = c.id;
+            document.getElementById('claimNo').value = c.no;
+            document.getElementById('custName').value = c.name;
+            document.getElementById('carPlate').value = c.plate;
+            document.getElementById('carModel').value = c.model;
+            document.getElementById('phone').value = c.phone;
+            document.getElementById('repairDetail').value = c.detail;
+            document.getElementById('dueDate').value = c.dueDate;
+            document.getElementById('statusSelect').value = c.status;
+
+            document.getElementById('formTitle').innerText = "🛠️ แก้ไขข้อมูลงานเคลม (รายการที่ " + (index + 1) + ")";
+            document.getElementById('saveBtn').innerText = "💾 บันทึกการแก้ไข";
+            document.getElementById('cancelBtn').classList.remove('hidden');
+
+            // เปิดแผงพนักงานและเลื่อนจอขึ้นไปหาฟอร์ม
+            document.getElementById('employeeSection').classList.remove('hidden');
+            document.getElementById('toggleRoleBtn').innerText = "ซ่อนแผงพนักงาน";
+            window.scrollTo({ top: document.getElementById('employeeSection').offsetTop - 20, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('editIndex').value = "-1";
+            clearFormInputs();
+            document.getElementById('formTitle').innerText = "🛠️ แผงควบคุมพนักงาน (เพิ่มข้อมูลใหม่)";
+            document.getElementById('saveBtn').innerText = "💾 บันทึกข้อมูลเข้าสู่ระบบ";
+            document.getElementById('cancelBtn').classList.add('hidden');
+        }
+
+        function clearFormInputs() {
             document.getElementById('claimId').value = '';
             document.getElementById('claimNo').value = '';
             document.getElementById('custName').value = '';
@@ -217,8 +263,7 @@
             document.getElementById('phone').value = '';
             document.getElementById('repairDetail').value = '';
             document.getElementById('dueDate').value = '';
-
-            alert("บันทึกข้อมูลสำเร็จเรียบร้อย!");
+            document.getElementById('statusSelect').value = "1";
         }
 
         function deleteClaim(index) {
