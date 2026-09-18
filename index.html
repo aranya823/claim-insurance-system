@@ -13,7 +13,7 @@
 <body class="bg-slate-100 min-h-screen py-10 px-4 flex justify-center">
 
     <!-- Container หลักแบบการ์ดลอย -->
-    <div class="bg-white w-full max-w-6xl rounded-3xl shadow-sm border border-slate-200 p-8 flex flex-col justify-between">
+    <div class="bg-white w-full max-w-4xl rounded-3xl shadow-sm border border-slate-200 p-8 flex flex-col justify-between">
 
         <div>
             <!-- Header -->
@@ -37,15 +37,15 @@
                     <button type="button" onclick="searchClaim()" class="bg-blue-600 hover:bg-blue-700 text-white px-7 py-3 rounded-xl text-sm font-medium transition cursor-pointer shadow-sm">ค้นหา</button>
                 </div>
                 
-                <!-- ผลการค้นหาแบบไทม์ไลน์กล่องย่อย -->
+                <!-- ผลการค้นหาแบบไทม์ไลน์กล่องย่อย (แสดงเฉพาะตอนค้นหาเจอ) -->
                 <div id="searchResult" class="mt-4 hidden">
-                    <div class="border border-slate-200 rounded-xl p-4 bg-white">
+                    <div class="border border-slate-200 rounded-xl p-5 bg-white shadow-sm">
                         <div class="flex justify-between items-center mb-4">
                             <div>
-                                <h3 id="resTitle" class="font-semibold text-slate-900"></h3>
-                                <p id="resSub" class="text-xs text-slate-500"></p>
+                                <h3 id="resTitle" class="font-semibold text-slate-900 text-base"></h3>
+                                <p id="resSub" class="text-xs text-slate-500 mt-1"></p>
                             </div>
-                            <span id="resBadge" class="bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full"></span>
+                            <span id="resBadge" class="bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1.5 rounded-full"></span>
                         </div>
                         <div id="resProgress" class="space-y-3 relative before:absolute before:inset-0 before:left-3 before:w-0.5 before:bg-slate-200"></div>
                     </div>
@@ -115,9 +115,9 @@
                 </div>
             </div>
 
-            <!-- ส่วนแสดงผลตารางผลการค้นหา (ซ่อนไว้ก่อนจนกว่าจะมีการค้นหาหรือเข้าสู่ระบบพนักงาน) -->
-            <div id="tableContainer" class="mt-6 hidden">
-                <h3 id="tableTitle" class="font-medium text-slate-800 mb-3 text-sm">ผลการค้นหา</h3>
+            <!-- ตารางสำหรับมุมมองพนักงาน (แสดงเฉพาะตอนพนักงานเข้าสู่ระบบเท่านั้น) -->
+            <div id="employeeTableContainer" class="mt-6 hidden">
+                <h3 class="font-medium text-slate-800 mb-3 text-sm">📋 รายการข้อมูลทั้งหมดในระบบ (สำหรับพนักงานจัดการ)</h3>
                 <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white">
                     <table class="w-full text-left text-xs whitespace-nowrap">
                         <thead>
@@ -131,11 +131,11 @@
                                 <th class="py-3 px-3">รายละเอียดการซ่อม</th>
                                 <th class="py-3 px-3">กำหนดเสร็จ</th>
                                 <th class="py-3 px-3">สถานะปัจจุบัน</th>
-                                <th id="thAction" class="py-3 px-3 text-center hidden">จัดการ</th>
+                                <th class="py-3 px-3 text-center">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="claimTableBody">
-                            <!-- ข้อมูลตารางจะแสดงที่นี่เฉพาะเมื่อค้นหา -->
+                            <!-- ข้อมูลพนักงาน -->
                         </tbody>
                     </table>
                 </div>
@@ -170,43 +170,16 @@
         let isEmployee = false;
         const EMPLOYEE_PASSWORD = "1234"; // รหัสผ่านพนักงาน
 
-        function renderTable(dataToDisplay, titleText = "ผลการค้นหา") {
+        function renderEmployeeTable() {
             const tbody = document.getElementById('claimTableBody');
-            const thAction = document.getElementById('thAction');
-            const tableContainer = document.getElementById('tableContainer');
-            const tableTitle = document.getElementById('tableTitle');
-
             tbody.innerHTML = '';
-            tableTitle.innerText = titleText;
-            tableContainer.classList.remove('hidden'); // แสดงตารางเมื่อมีการเรียกเรนเดอร์
 
-            const list = dataToDisplay || [];
-
-            if (list.length === 0) {
-                const colSpan = isEmployee ? 10 : 9;
-                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-6 text-slate-400">ไม่พบข้อมูลที่ตรงกับการค้นหา</td></tr>`;
+            if (claims.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-slate-400">ยังไม่มีข้อมูลในระบบ</td></tr>`;
                 return;
             }
 
-            if (isEmployee) {
-                thAction.classList.remove('hidden');
-            } else {
-                thAction.classList.add('hidden');
-            }
-
-            list.forEach((c) => {
-                const actualIndex = claims.findIndex(item => item.id === c.id);
-
-                let actionTd = '';
-                if (isEmployee) {
-                    actionTd = `
-                        <td class="py-3 px-3 text-center space-x-1">
-                            <button type="button" onclick="editClaim(${actualIndex})" class="bg-amber-50 text-amber-600 hover:bg-amber-100 px-2.5 py-1 rounded-lg font-medium cursor-pointer transition">แก้ไข</button>
-                            <button type="button" onclick="deleteClaim(${actualIndex})" class="bg-red-50 text-red-500 hover:bg-red-100 px-2.5 py-1 rounded-lg font-medium cursor-pointer transition">ลบ</button>
-                        </td>
-                    `;
-                }
-
+            claims.forEach((c, index) => {
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
                         <td class="py-3 px-3 font-medium text-slate-900">${c.name}</td>
@@ -218,7 +191,10 @@
                         <td class="py-3 px-3">${c.detail}</td>
                         <td class="py-3 px-3 text-blue-600 font-medium">${c.dueDate}</td>
                         <td class="py-3 px-3"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-[11px] font-medium">${statusList[parseInt(c.status)-1]}</span></td>
-                        ${actionTd}
+                        <td class="py-3 px-3 text-center space-x-1">
+                            <button type="button" onclick="editClaim(${index})" class="bg-amber-50 text-amber-600 hover:bg-amber-100 px-2.5 py-1 rounded-lg font-medium cursor-pointer transition">แก้ไข</button>
+                            <button type="button" onclick="deleteClaim(${index})" class="bg-red-50 text-red-500 hover:bg-red-100 px-2.5 py-1 rounded-lg font-medium cursor-pointer transition">ลบ</button>
+                        </td>
                     </tr>
                 `;
             });
@@ -232,9 +208,9 @@
             if (pass === EMPLOYEE_PASSWORD) {
                 isEmployee = true;
                 document.getElementById('employeeSection').classList.remove('hidden');
+                document.getElementById('employeeTableContainer').classList.remove('hidden');
                 document.getElementById('toggleRoleBtn').classList.add('hidden');
-                // หากเป็นพนักงาน ให้แสดงรายการทั้งหมดในระบบ
-                renderTable(claims, "รายการข้อมูลทั้งหมดในระบบ (มุมมองพนักงาน)");
+                renderEmployeeTable();
                 window.scrollTo({ top: document.getElementById('employeeSection').offsetTop - 20, behavior: 'smooth' });
             } else {
                 alert("รหัสผ่านไม่ถูกต้อง! กรุณาลองใหม่อีกครั้ง");
@@ -244,12 +220,9 @@
         function logoutEmployee() {
             isEmployee = false;
             document.getElementById('employeeSection').classList.add('hidden');
+            document.getElementById('employeeTableContainer').classList.add('hidden');
             document.getElementById('toggleRoleBtn').classList.remove('hidden');
             resetForm();
-            // ซ่อนตารางเมื่อออกจากระบบพนักงาน
-            document.getElementById('tableContainer').classList.add('hidden');
-            document.getElementById('searchResult').classList.add('hidden');
-            document.getElementById('searchInput').value = '';
         }
 
         function saveClaimData() {
@@ -284,9 +257,7 @@
                 resetForm();
             }
 
-            if (isEmployee) {
-                renderTable(claims, "รายการข้อมูลทั้งหมดในระบบ (มุมมองพนักงาน)");
-            }
+            renderEmployeeTable();
             if (editIndex === -1) clearFormInputs();
         }
 
@@ -309,7 +280,6 @@
             saveBtn.className = "flex-grow bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-medium transition cursor-pointer shadow-sm";
             
             document.getElementById('cancelBtn').classList.remove('hidden');
-
             window.scrollTo({ top: document.getElementById('employeeSection').offsetTop - 20, behavior: 'smooth' });
         }
 
@@ -340,11 +310,7 @@
         function deleteClaim(index) {
             if(confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) {
                 claims.splice(index, 1);
-                if (isEmployee) {
-                    renderTable(claims, "รายการข้อมูลทั้งหมดในระบบ (มุมมองพนักงาน)");
-                } else {
-                    document.getElementById('tableContainer').classList.add('hidden');
-                }
+                renderEmployeeTable();
             }
         }
 
@@ -354,12 +320,10 @@
             
             if(!keyword) {
                 alert("กรุณากรอกข้อมูลที่ต้องการค้นหา");
-                document.getElementById('tableContainer').classList.add('hidden');
                 resultBox.classList.add('hidden');
                 return;
             }
 
-            // กรองหาเฉพาะรายการที่ตรงกับคำค้นหา (จากเลขวิน, เลขใบเคลม, ทะเบียนรถ หรือชื่อลูกค้า)
             const foundList = claims.filter(c => 
                 c.id.toLowerCase().includes(keyword) || 
                 c.no.toLowerCase().includes(keyword) || 
@@ -399,18 +363,12 @@
                 });
                 document.getElementById('resProgress').innerHTML = progressHTML;
 
-                // แสดงผลเฉพาะรายการที่ค้นหาเจอในตารางด้านล่าง
-                renderTable(foundList, "ผลการค้นหาที่พบ");
-
             } else {
                 resultBox.classList.remove('hidden');
                 document.getElementById('resTitle').innerText = "ไม่พบข้อมูลงานเคลม";
                 document.getElementById('resSub').innerText = "กรุณาตรวจสอบชื่อลูกค้า, ทะเบียนรถ หรือเลขที่เคลมอีกครั้ง";
                 document.getElementById('resBadge').innerText = "ไม่พบข้อมูล";
                 document.getElementById('resProgress').innerHTML = "";
-
-                // ซ่อนตารางถ้าไม่พบข้อมูล
-                document.getElementById('tableContainer').classList.add('hidden');
             }
         }
     </script>
