@@ -37,7 +37,7 @@
                     <button type="button" onclick="searchClaim()" class="bg-blue-600 hover:bg-blue-700 text-white px-7 py-3 rounded-xl text-sm font-medium transition cursor-pointer shadow-sm">ค้นหา</button>
                 </div>
                 
-                <!-- ผลการค้นหาสำหรับลูกค้า -->
+                <!-- ผลการค้นหาแบบไทม์ไลน์กล่องย่อย -->
                 <div id="searchResult" class="mt-4 hidden">
                     <div class="border border-slate-200 rounded-xl p-4 bg-white">
                         <div class="flex justify-between items-center mb-4">
@@ -115,7 +115,7 @@
                 </div>
             </div>
 
-            <!-- ส่วนแสดงผลตารางรายการ -->
+            <!-- ส่วนแสดงผลตารางผลการค้นหา -->
             <div class="mt-6">
                 <h3 class="font-medium text-slate-800 mb-3 text-sm">ผลการค้นหา</h3>
                 <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white">
@@ -135,7 +135,7 @@
                             </tr>
                         </thead>
                         <tbody id="claimTableBody">
-                            <!-- ข้อมูลจะแสดงที่นี่ -->
+                            <tr><td colspan="10" class="text-center py-6 text-slate-400">กรุณากรอกข้อมูลเพื่อค้นหา</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -168,16 +168,19 @@
         ];
 
         let isEmployee = false;
-        const EMPLOYEE_PASSWORD = "1234"; // รหัสผ่านพนักงาน (สามารถเปลี่ยนค่าตรงนี้ได้)
+        let searchResults = []; // เก็บผลลัพธ์เฉพาะที่ค้นหาเจอ
+        const EMPLOYEE_PASSWORD = "1234"; // รหัสผ่านพนักงาน
 
-        function renderTable() {
+        function renderTable(dataToDisplay) {
             const tbody = document.getElementById('claimTableBody');
             const thAction = document.getElementById('thAction');
             tbody.innerHTML = '';
 
-            if (claims.length === 0) {
+            const list = dataToDisplay || [];
+
+            if (list.length === 0) {
                 const colSpan = isEmployee ? 10 : 9;
-                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-6 text-slate-400">กรุณากรอกข้อมูลเพื่อค้นหา หรือเข้าสู่ระบบพนักงานเพื่อดูรายการทั้งหมด</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-6 text-slate-400">${isEmployee ? 'ยังไม่มีข้อมูลในระบบ' : 'ไม่พบข้อมูลที่ค้นหา กรุณาตรวจสอบเลขที่เรียกร้อง, ทะเบียนรถ หรือใบเคลมอีกครั้ง'}</td></tr>`;
                 return;
             }
 
@@ -187,13 +190,16 @@
                 thAction.classList.add('hidden');
             }
 
-            claims.forEach((c, index) => {
+            list.forEach((c) => {
+                // หา index จริงในอาเรย์หลัก (claims) เพื่อให้ปุ่มแก้ไข/ลบ ทำงานกับข้อมูลถูกต้อง
+                const actualIndex = claims.findIndex(item => item.id === c.id);
+
                 let actionTd = '';
                 if (isEmployee) {
                     actionTd = `
                         <td class="py-3 px-3 text-center space-x-1">
-                            <button type="button" onclick="editClaim(${index})" class="bg-amber-50 text-amber-600 hover:bg-amber-100 px-2.5 py-1 rounded-lg font-medium cursor-pointer transition">แก้ไข</button>
-                            <button type="button" onclick="deleteClaim(${index})" class="bg-red-50 text-red-500 hover:bg-red-100 px-2.5 py-1 rounded-lg font-medium cursor-pointer transition">ลบ</button>
+                            <button type="button" onclick="editClaim(${actualIndex})" class="bg-amber-50 text-amber-600 hover:bg-amber-100 px-2.5 py-1 rounded-lg font-medium cursor-pointer transition">แก้ไข</button>
+                            <button type="button" onclick="deleteClaim(${actualIndex})" class="bg-red-50 text-red-500 hover:bg-red-100 px-2.5 py-1 rounded-lg font-medium cursor-pointer transition">ลบ</button>
                         </td>
                     `;
                 }
@@ -216,16 +222,16 @@
             localStorage.setItem('claims_data', JSON.stringify(claims));
         }
 
-        // ฟังก์ชันตรวจสอบรหัสผ่านพนักงาน
         function promptPassword() {
             const pass = prompt("กรุณากรอกรหัสผ่านพนักงาน:");
-            if (pass === null) return; // กรณีกดยกเลิก
+            if (pass === null) return;
 
             if (pass === EMPLOYEE_PASSWORD) {
                 isEmployee = true;
                 document.getElementById('employeeSection').classList.remove('hidden');
                 document.getElementById('toggleRoleBtn').classList.add('hidden');
-                renderTable();
+                // ถ้าพนักงานเข้าสู่ระบบ ให้แสดงข้อมูลทั้งหมดในตารางได้
+                renderTable(claims);
                 window.scrollTo({ top: document.getElementById('employeeSection').offsetTop - 20, behavior: 'smooth' });
             } else {
                 alert("รหัสผ่านไม่ถูกต้อง! กรุณาลองใหม่อีกครั้ง");
@@ -237,7 +243,10 @@
             document.getElementById('employeeSection').classList.add('hidden');
             document.getElementById('toggleRoleBtn').classList.remove('hidden');
             resetForm();
-            renderTable();
+            // พอกดออก ให้ล้างตารางผลการค้นหาออก
+            searchResults = [];
+            renderTable([]);
+            document.getElementById('searchResult').classList.add('hidden');
         }
 
         function saveClaimData() {
@@ -272,7 +281,11 @@
                 resetForm();
             }
 
-            renderTable();
+            if (isEmployee) {
+                renderTable(claims);
+            } else {
+                renderTable([]);
+            }
             if (editIndex === -1) clearFormInputs();
         }
 
@@ -326,7 +339,7 @@
         function deleteClaim(index) {
             if(confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) {
                 claims.splice(index, 1);
-                renderTable();
+                renderTable(isEmployee ? claims : []);
             }
         }
 
@@ -337,10 +350,18 @@
                 alert("กรุณากรอกข้อมูลที่ต้องการค้นหา");
                 return;
             }
-            const found = claims.find(c => c.id.toLowerCase() === keyword || c.no.toLowerCase() === keyword || c.plate.toLowerCase() === keyword);
+
+            // ค้นหาข้อมูลที่ตรงกัน (รองรับทั้งเลขวิน, เลขใบเคลม หรือทะเบียนรถ แบบบางส่วนหรือเต็มคำ)
+            const foundList = claims.filter(c => 
+                c.id.toLowerCase().includes(keyword) || 
+                c.no.toLowerCase().includes(keyword) || 
+                c.plate.toLowerCase().includes(keyword) ||
+                c.name.toLowerCase().includes(keyword)
+            );
             
-            resultBox.classList.remove('hidden');
-            if(found) {
+            if(foundList.length > 0) {
+                const found = foundList[0]; // แสดงกล่องไทม์ไลน์อันแรกที่เจอ
+                resultBox.classList.remove('hidden');
                 document.getElementById('resTitle').innerText = `ทะเบียนรถ: ${found.plate} (${found.model})`;
                 document.getElementById('resSub').innerText = `ชื่อลูกค้า: ${found.name} | เลขเรียก: ${found.id} | ใบเคลม: ${found.no} | กำหนดเสร็จ: ${found.dueDate} | รายละเอียด: ${found.detail}`;
                 document.getElementById('resBadge').innerText = statusList[parseInt(found.status)-1];
@@ -369,15 +390,21 @@
                     `;
                 });
                 document.getElementById('resProgress').innerHTML = progressHTML;
+
+                // อัปเดตตารางให้แสดงเฉพาะผลการค้นหาที่ตรงกันเท่านั้น
+                renderTable(foundList);
+
             } else {
+                resultBox.classList.remove('hidden');
                 document.getElementById('resTitle').innerText = "ไม่พบข้อมูลงานเคลม";
                 document.getElementById('resSub').innerText = "กรุณาตรวจสอบเลขทะเบียนรถหรือเลขที่เคลมอีกครั้ง";
                 document.getElementById('resBadge').innerText = "ไม่พบข้อมูล";
                 document.getElementById('resProgress').innerHTML = "";
+
+                // เคลียร์ตาราง
+                renderTable([]);
             }
         }
-
-        renderTable();
     </script>
 </body>
 </html>
