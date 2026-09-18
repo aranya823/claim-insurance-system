@@ -31,9 +31,9 @@
                 <h2 class="text-base font-medium text-blue-900 mb-1 flex items-center gap-2">
                     🔍 ตรวจสอบสถานะงานเคลม (สำหรับลูกค้า)
                 </h2>
-                <p class="text-xs text-slate-500 mb-4">กรอกเลขที่เรียกร้อง, ทะเบียนรถ หรือใบเคลม เพื่อตรวจสอบสถานะ</p>
+                <p class="text-xs text-slate-500 mb-4">กรอกเลขที่เรียกร้อง, ทะเบียนรถ หรือชื่อลูกค้า เพื่อตรวจสอบสถานะ</p>
                 <div class="flex gap-3">
-                    <input type="text" id="searchInput" placeholder="เช่น CLM-001, กข 1234 หรือเลขใบเคลม" class="flex-grow bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600">
+                    <input type="text" id="searchInput" placeholder="เช่น CLM-001, กข 1234 หรือชื่อลูกค้า" class="flex-grow bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600">
                     <button type="button" onclick="searchClaim()" class="bg-blue-600 hover:bg-blue-700 text-white px-7 py-3 rounded-xl text-sm font-medium transition cursor-pointer shadow-sm">ค้นหา</button>
                 </div>
                 
@@ -115,9 +115,9 @@
                 </div>
             </div>
 
-            <!-- ส่วนแสดงผลตารางผลการค้นหา -->
-            <div class="mt-6">
-                <h3 class="font-medium text-slate-800 mb-3 text-sm">ผลการค้นหา</h3>
+            <!-- ส่วนแสดงผลตารางผลการค้นหา (ซ่อนไว้ก่อนจนกว่าจะมีการค้นหาหรือเข้าสู่ระบบพนักงาน) -->
+            <div id="tableContainer" class="mt-6 hidden">
+                <h3 id="tableTitle" class="font-medium text-slate-800 mb-3 text-sm">ผลการค้นหา</h3>
                 <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white">
                     <table class="w-full text-left text-xs whitespace-nowrap">
                         <thead>
@@ -135,7 +135,7 @@
                             </tr>
                         </thead>
                         <tbody id="claimTableBody">
-                            <tr><td colspan="10" class="text-center py-6 text-slate-400">กรุณากรอกข้อมูลเพื่อค้นหา</td></tr>
+                            <!-- ข้อมูลตารางจะแสดงที่นี่เฉพาะเมื่อค้นหา -->
                         </tbody>
                     </table>
                 </div>
@@ -168,19 +168,23 @@
         ];
 
         let isEmployee = false;
-        let searchResults = []; // เก็บผลลัพธ์เฉพาะที่ค้นหาเจอ
         const EMPLOYEE_PASSWORD = "1234"; // รหัสผ่านพนักงาน
 
-        function renderTable(dataToDisplay) {
+        function renderTable(dataToDisplay, titleText = "ผลการค้นหา") {
             const tbody = document.getElementById('claimTableBody');
             const thAction = document.getElementById('thAction');
+            const tableContainer = document.getElementById('tableContainer');
+            const tableTitle = document.getElementById('tableTitle');
+
             tbody.innerHTML = '';
+            tableTitle.innerText = titleText;
+            tableContainer.classList.remove('hidden'); // แสดงตารางเมื่อมีการเรียกเรนเดอร์
 
             const list = dataToDisplay || [];
 
             if (list.length === 0) {
                 const colSpan = isEmployee ? 10 : 9;
-                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-6 text-slate-400">${isEmployee ? 'ยังไม่มีข้อมูลในระบบ' : 'ไม่พบข้อมูลที่ค้นหา กรุณาตรวจสอบเลขที่เรียกร้อง, ทะเบียนรถ หรือใบเคลมอีกครั้ง'}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-6 text-slate-400">ไม่พบข้อมูลที่ตรงกับการค้นหา</td></tr>`;
                 return;
             }
 
@@ -191,7 +195,6 @@
             }
 
             list.forEach((c) => {
-                // หา index จริงในอาเรย์หลัก (claims) เพื่อให้ปุ่มแก้ไข/ลบ ทำงานกับข้อมูลถูกต้อง
                 const actualIndex = claims.findIndex(item => item.id === c.id);
 
                 let actionTd = '';
@@ -230,8 +233,8 @@
                 isEmployee = true;
                 document.getElementById('employeeSection').classList.remove('hidden');
                 document.getElementById('toggleRoleBtn').classList.add('hidden');
-                // ถ้าพนักงานเข้าสู่ระบบ ให้แสดงข้อมูลทั้งหมดในตารางได้
-                renderTable(claims);
+                // หากเป็นพนักงาน ให้แสดงรายการทั้งหมดในระบบ
+                renderTable(claims, "รายการข้อมูลทั้งหมดในระบบ (มุมมองพนักงาน)");
                 window.scrollTo({ top: document.getElementById('employeeSection').offsetTop - 20, behavior: 'smooth' });
             } else {
                 alert("รหัสผ่านไม่ถูกต้อง! กรุณาลองใหม่อีกครั้ง");
@@ -243,10 +246,10 @@
             document.getElementById('employeeSection').classList.add('hidden');
             document.getElementById('toggleRoleBtn').classList.remove('hidden');
             resetForm();
-            // พอกดออก ให้ล้างตารางผลการค้นหาออก
-            searchResults = [];
-            renderTable([]);
+            // ซ่อนตารางเมื่อออกจากระบบพนักงาน
+            document.getElementById('tableContainer').classList.add('hidden');
             document.getElementById('searchResult').classList.add('hidden');
+            document.getElementById('searchInput').value = '';
         }
 
         function saveClaimData() {
@@ -282,9 +285,7 @@
             }
 
             if (isEmployee) {
-                renderTable(claims);
-            } else {
-                renderTable([]);
+                renderTable(claims, "รายการข้อมูลทั้งหมดในระบบ (มุมมองพนักงาน)");
             }
             if (editIndex === -1) clearFormInputs();
         }
@@ -339,19 +340,26 @@
         function deleteClaim(index) {
             if(confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) {
                 claims.splice(index, 1);
-                renderTable(isEmployee ? claims : []);
+                if (isEmployee) {
+                    renderTable(claims, "รายการข้อมูลทั้งหมดในระบบ (มุมมองพนักงาน)");
+                } else {
+                    document.getElementById('tableContainer').classList.add('hidden');
+                }
             }
         }
 
         function searchClaim() {
             const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
             const resultBox = document.getElementById('searchResult');
+            
             if(!keyword) {
                 alert("กรุณากรอกข้อมูลที่ต้องการค้นหา");
+                document.getElementById('tableContainer').classList.add('hidden');
+                resultBox.classList.add('hidden');
                 return;
             }
 
-            // ค้นหาข้อมูลที่ตรงกัน (รองรับทั้งเลขวิน, เลขใบเคลม หรือทะเบียนรถ แบบบางส่วนหรือเต็มคำ)
+            // กรองหาเฉพาะรายการที่ตรงกับคำค้นหา (จากเลขวิน, เลขใบเคลม, ทะเบียนรถ หรือชื่อลูกค้า)
             const foundList = claims.filter(c => 
                 c.id.toLowerCase().includes(keyword) || 
                 c.no.toLowerCase().includes(keyword) || 
@@ -360,7 +368,7 @@
             );
             
             if(foundList.length > 0) {
-                const found = foundList[0]; // แสดงกล่องไทม์ไลน์อันแรกที่เจอ
+                const found = foundList[0]; 
                 resultBox.classList.remove('hidden');
                 document.getElementById('resTitle').innerText = `ทะเบียนรถ: ${found.plate} (${found.model})`;
                 document.getElementById('resSub').innerText = `ชื่อลูกค้า: ${found.name} | เลขเรียก: ${found.id} | ใบเคลม: ${found.no} | กำหนดเสร็จ: ${found.dueDate} | รายละเอียด: ${found.detail}`;
@@ -391,18 +399,18 @@
                 });
                 document.getElementById('resProgress').innerHTML = progressHTML;
 
-                // อัปเดตตารางให้แสดงเฉพาะผลการค้นหาที่ตรงกันเท่านั้น
-                renderTable(foundList);
+                // แสดงผลเฉพาะรายการที่ค้นหาเจอในตารางด้านล่าง
+                renderTable(foundList, "ผลการค้นหาที่พบ");
 
             } else {
                 resultBox.classList.remove('hidden');
                 document.getElementById('resTitle').innerText = "ไม่พบข้อมูลงานเคลม";
-                document.getElementById('resSub').innerText = "กรุณาตรวจสอบเลขทะเบียนรถหรือเลขที่เคลมอีกครั้ง";
+                document.getElementById('resSub').innerText = "กรุณาตรวจสอบชื่อลูกค้า, ทะเบียนรถ หรือเลขที่เคลมอีกครั้ง";
                 document.getElementById('resBadge').innerText = "ไม่พบข้อมูล";
                 document.getElementById('resProgress').innerHTML = "";
 
-                // เคลียร์ตาราง
-                renderTable([]);
+                // ซ่อนตารางถ้าไม่พบข้อมูล
+                document.getElementById('tableContainer').classList.add('hidden');
             }
         }
     </script>
