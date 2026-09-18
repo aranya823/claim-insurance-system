@@ -21,7 +21,7 @@
                 <h1 class="text-2xl font-semibold text-blue-900 flex items-center gap-2">
                     🚗 ระบบติดตามงานเคลมประกัน
                 </h1>
-                <button type="button" id="toggleRoleBtn" onclick="toggleRole()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-xl font-medium transition cursor-pointer shadow-sm">
+                <button type="button" id="toggleRoleBtn" onclick="promptPassword()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-xl font-medium transition cursor-pointer shadow-sm">
                     พนักงานเข้าสู่ระบบ
                 </button>
             </div>
@@ -52,14 +52,14 @@
                 </div>
             </div>
 
-            <!-- แผงควบคุมพนักงาน (แสดงเฉพาะเมื่อเข้าสู่ระบบ) -->
+            <!-- แผงควบคุมพนักงาน (แสดงเฉพาะเมื่อเข้าสู่ระบบสำเร็จ) -->
             <div id="employeeSection" class="bg-amber-50/60 rounded-2xl p-6 mb-6 border border-amber-200 hidden">
                 <input type="hidden" id="editIndex" value="-1">
                 <div class="flex justify-between items-center mb-4">
                     <h2 id="formTitle" class="text-base font-medium text-amber-900 flex items-center gap-2">
                         🛠️ แผงควบคุมพนักงาน (เพิ่ม/แก้ไขข้อมูล)
                     </h2>
-                    <button type="button" onclick="toggleRole()" class="bg-red-500 hover:bg-red-600 text-white text-xs px-4 py-2 rounded-xl transition cursor-pointer shadow-sm">
+                    <button type="button" onclick="logoutEmployee()" class="bg-red-500 hover:bg-red-600 text-white text-xs px-4 py-2 rounded-xl transition cursor-pointer shadow-sm">
                         ออกจากระบบพนักงาน
                     </button>
                 </div>
@@ -168,6 +168,7 @@
         ];
 
         let isEmployee = false;
+        const EMPLOYEE_PASSWORD = "1234"; // กำหนดรหัสผ่านพนักงานตรงนี้ (สามารถเปลี่ยนได้ตามต้องการ)
 
         function renderTable() {
             const tbody = document.getElementById('claimTableBody');
@@ -213,6 +214,29 @@
                 `;
             });
             localStorage.setItem('claims_data', JSON.stringify(claims));
+        }
+
+        function promptPassword() {
+            const pass = prompt("กรุณากรอกรหัสผ่านพนักงาน:");
+            if (pass === null) return; // กด Cancel
+
+            if (pass === EMPLOYEE_PASSWORD) {
+                isEmployee = true;
+                document.getElementById('employeeSection').classList.remove('hidden');
+                document.getElementById('toggleRoleBtn').classList.add('hidden');
+                renderTable();
+                window.scrollTo({ top: document.getElementById('employeeSection').offsetTop - 20, behavior: 'smooth' });
+            } else {
+                alert("รหัสผ่านไม่ถูกต้อง! กรุณาลองใหม่อีกครั้ง");
+            }
+        }
+
+        function logoutEmployee() {
+            isEmployee = false;
+            document.getElementById('employeeSection').classList.add('hidden');
+            document.getElementById('toggleRoleBtn').classList.remove('hidden');
+            resetForm();
+            renderTable();
         }
 
         function saveClaimData() {
@@ -350,23 +374,6 @@
                 document.getElementById('resBadge').innerText = "ไม่พบข้อมูล";
                 document.getElementById('resProgress').innerHTML = "";
             }
-        }
-
-        function toggleRole() {
-            const empSec = document.getElementById('employeeSection');
-            const toggleBtn = document.getElementById('toggleRoleBtn');
-            empSec.classList.toggle('hidden');
-            
-            if(!empSec.classList.contains('hidden')) {
-                isEmployee = true;
-                toggleBtn.innerText = "ออกจากระบบพนักงาน";
-                window.scrollTo({ top: empSec.offsetTop - 20, behavior: 'smooth' });
-            } else {
-                isEmployee = false;
-                toggleBtn.innerText = "พนักงานเข้าสู่ระบบ";
-                resetForm();
-            }
-            renderTable();
         }
 
         renderTable();
