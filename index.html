@@ -57,7 +57,7 @@
                 <input type="hidden" id="editIndex" value="-1">
                 <div class="flex justify-between items-center mb-4">
                     <h2 id="formTitle" class="text-base font-medium text-amber-900 flex items-center gap-2">
-                        🛠️ แผงควบคุมพนักงาน (เพิ่มข้อมูลใหม่)
+                        🛠️ แผงควบคุมพนักงาน (เพิ่ม/แก้ไขข้อมูล)
                     </h2>
                     <button type="button" onclick="toggleRole()" class="bg-red-500 hover:bg-red-600 text-white text-xs px-4 py-2 rounded-xl transition cursor-pointer shadow-sm">
                         ออกจากระบบพนักงาน
@@ -109,13 +109,13 @@
                     <button type="button" onclick="saveClaimData()" id="saveBtn" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition cursor-pointer shadow-sm">
                         บันทึกข้อมูลเข้าสู่ระบบ
                     </button>
-                    <button type="button" onclick="resetForm()" id="cancelBtn" class="hidden bg-slate-400 hover:bg-slate-500 text-white px-6 py-3 rounded-xl font-medium transition cursor-pointer">
-                        ยกเลิกการแก้ไข
+                    <button type="button" onclick="resetForm()" id="cancelBtn" class="hidden bg-slate-300 hover:bg-slate-400 text-slate-700 px-6 py-3 rounded-xl font-medium transition cursor-pointer">
+                        ยกเลิก
                     </button>
                 </div>
             </div>
 
-            <!-- ส่วนแสดงผลตารางรายการ -->
+            <!-- ส่วนแสดงผลตารางรายการด้านล่าง -->
             <div class="mt-6">
                 <h3 class="font-medium text-slate-800 mb-3 text-sm">ผลการค้นหา</h3>
                 <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white">
@@ -142,7 +142,7 @@
             </div>
         </div>
 
-        <!-- Footer คำแนะนำด้านล่าง -->
+        <!-- Footer ด้านล่างสุด -->
         <div class="mt-8 text-center text-xs text-slate-400">
             <p>กรุณากรอกข้อมูลเพื่อค้นหา หรือเข้าสู่ระบบพนักงานเพื่อดูรายการทั้งหมด</p>
         </div>
@@ -191,7 +191,7 @@
                 if (isEmployee) {
                     actionTd = `
                         <td class="py-3 px-3 text-center space-x-1">
-                            <button type="button" onclick="editClaim(${index})" class="bg-amber-100 text-amber-800 hover:bg-amber-200 px-2.5 py-1 rounded-lg font-medium cursor-pointer transition">แก้ไข</button>
+                            <button type="button" onclick="editClaim(${index})" class="bg-amber-50 text-amber-600 hover:bg-amber-100 px-2.5 py-1 rounded-lg font-medium cursor-pointer transition">แก้ไข</button>
                             <button type="button" onclick="deleteClaim(${index})" class="bg-red-50 text-red-500 hover:bg-red-100 px-2.5 py-1 rounded-lg font-medium cursor-pointer transition">ลบ</button>
                         </td>
                     `;
@@ -264,8 +264,7 @@
             document.getElementById('dueDate').value = c.dueDate;
             document.getElementById('statusSelect').value = c.status;
 
-            // ปรับเปลี่ยนหน้าตาฟอร์มเป็นโหมดแก้ไข
-            document.getElementById('formTitle').innerText = "🛠️ แผงควบคุมพนักงาน (แก้ไขข้อมูลรายการ: " + c.plate + ")";
+            document.getElementById('formTitle').innerText = "🛠️ แก้ไขข้อมูลงานเคลม (รายการที่ " + (index + 1) + ")";
             const saveBtn = document.getElementById('saveBtn');
             saveBtn.innerText = "บันทึกการแก้ไข";
             saveBtn.className = "flex-grow bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-medium transition cursor-pointer shadow-sm";
@@ -278,7 +277,7 @@
         function resetForm() {
             document.getElementById('editIndex').value = "-1";
             clearFormInputs();
-            document.getElementById('formTitle').innerText = "🛠️ แผงควบคุมพนักงาน (เพิ่มข้อมูลใหม่)";
+            document.getElementById('formTitle').innerText = "🛠️ แผงควบคุมพนักงาน (เพิ่ม/แก้ไขข้อมูล)";
             
             const saveBtn = document.getElementById('saveBtn');
             saveBtn.innerText = "บันทึกข้อมูลเข้าสู่ระบบ";
