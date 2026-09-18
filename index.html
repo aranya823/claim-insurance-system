@@ -52,12 +52,12 @@
                 </div>
             </div>
 
-            <!-- แผงควบคุมพนักงาน (แสดงเฉพาะเมื่อเข้าสู่ระบบสำเร็จ) -->
+            <!-- แผงควบคุมพนักงาน (แสดงเฉพาะเมื่อใส่รหัสผ่านถูกต้อง) -->
             <div id="employeeSection" class="bg-amber-50/60 rounded-2xl p-6 mb-6 border border-amber-200 hidden">
                 <input type="hidden" id="editIndex" value="-1">
                 <div class="flex justify-between items-center mb-4">
                     <h2 id="formTitle" class="text-base font-medium text-amber-900 flex items-center gap-2">
-                        🛠️ แผงควบคุมพนักงาน (เพิ่ม/แก้ไขข้อมูล)
+                        🛠️ แผงควบคุมพนักงาน (เพิ่มข้อมูลใหม่)
                     </h2>
                     <button type="button" onclick="logoutEmployee()" class="bg-red-500 hover:bg-red-600 text-white text-xs px-4 py-2 rounded-xl transition cursor-pointer shadow-sm">
                         ออกจากระบบพนักงาน
@@ -115,7 +115,7 @@
                 </div>
             </div>
 
-            <!-- ส่วนแสดงผลตารางรายการด้านล่าง -->
+            <!-- ส่วนแสดงผลตารางรายการ -->
             <div class="mt-6">
                 <h3 class="font-medium text-slate-800 mb-3 text-sm">ผลการค้นหา</h3>
                 <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white">
@@ -168,7 +168,7 @@
         ];
 
         let isEmployee = false;
-        const EMPLOYEE_PASSWORD = "1234"; // กำหนดรหัสผ่านพนักงานตรงนี้ (สามารถเปลี่ยนได้ตามต้องการ)
+        const EMPLOYEE_PASSWORD = "1234"; // รหัสผ่านพนักงาน (สามารถเปลี่ยนค่าตรงนี้ได้)
 
         function renderTable() {
             const tbody = document.getElementById('claimTableBody');
@@ -216,9 +216,10 @@
             localStorage.setItem('claims_data', JSON.stringify(claims));
         }
 
+        // ฟังก์ชันตรวจสอบรหัสผ่านพนักงาน
         function promptPassword() {
             const pass = prompt("กรุณากรอกรหัสผ่านพนักงาน:");
-            if (pass === null) return; // กด Cancel
+            if (pass === null) return; // กรณีกดยกเลิก
 
             if (pass === EMPLOYEE_PASSWORD) {
                 isEmployee = true;
@@ -288,7 +289,7 @@
             document.getElementById('dueDate').value = c.dueDate;
             document.getElementById('statusSelect').value = c.status;
 
-            document.getElementById('formTitle').innerText = "🛠️ แก้ไขข้อมูลงานเคลม (รายการที่ " + (index + 1) + ")";
+            document.getElementById('formTitle').innerText = "🛠️ แผงควบคุมพนักงาน (แก้ไขข้อมูลรายการ: " + c.plate + ")";
             const saveBtn = document.getElementById('saveBtn');
             saveBtn.innerText = "บันทึกการแก้ไข";
             saveBtn.className = "flex-grow bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-medium transition cursor-pointer shadow-sm";
@@ -301,7 +302,7 @@
         function resetForm() {
             document.getElementById('editIndex').value = "-1";
             clearFormInputs();
-            document.getElementById('formTitle').innerText = "🛠️ แผงควบคุมพนักงาน (เพิ่ม/แก้ไขข้อมูล)";
+            document.getElementById('formTitle').innerText = "🛠️ แผงควบคุมพนักงาน (เพิ่มข้อมูลใหม่)";
             
             const saveBtn = document.getElementById('saveBtn');
             saveBtn.innerText = "บันทึกข้อมูลเข้าสู่ระบบ";
